@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 from aiogram.types import Message
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, StartMode, ShowMode
 from aiogram_dialog.widgets.input import ManagedTextInput
 from aiogram_dialog.widgets.kbd import Button
 
@@ -120,7 +120,8 @@ async def on_confirm_registration(callback, button: Button, dialog_manager: Dial
         )
         
         # Переходим в главное меню
-        await dialog_manager.start(MainMenuSG.menu, mode="reset_stack")
+        dialog_manager.show_mode = ShowMode.SEND
+        await dialog_manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)
         
     except Exception as e:
         await callback.message.answer(f"❌ Произошла ошибка при регистрации: {str(e)}")

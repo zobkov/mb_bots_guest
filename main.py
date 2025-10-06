@@ -21,25 +21,21 @@ from app.infrastructure.google_sheets.sheets_manager import GoogleSheetsManager
 from app.middleware import DependencyMiddleware
 from app.handlers import router as main_router
 from app.dialogs.registry import register_dialogs
+from app.utils.logger import setup_logging, get_logger, ContextLogger
 
 
 async def main():
     """Основная функция запуска бота."""
     # Настраиваем логирование
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler("bot.log", encoding="utf-8")
-        ]
-    )
-    logger = logging.getLogger(__name__)
+    setup_logging()
+    logger = get_logger(__name__)
+    
+    logger.info("🚀 Запуск бота Management Future '25")
     
     try:
         # Загружаем конфигурацию
         config = load_config()
-        logger.info("Конфигурация загружена")
+        logger.info("✅ Конфигурация загружена")
         
         # Создаем Redis клиента для FSM
         if config.redis.password:
@@ -69,11 +65,11 @@ async def main():
             default=DefaultBotProperties(parse_mode=ParseMode.HTML)
         )
         dp = Dispatcher(storage=storage)
-        logger.info("Бот и диспетчер созданы")
+        logger.info("✅ Бот и диспетчер созданы")
         
         # Инициализируем базу данных
         database = Database(config.database)
-        logger.info("База данных инициализирована")
+        logger.info("✅ База данных инициализирована")
         
         # Инициализируем Google Sheets
         sheets_manager = None
@@ -85,21 +81,40 @@ async def main():
         
         # Настраиваем middleware для передачи зависимостей
         async def services_middleware(handler, event, data):
-            async with database.get_session() as session:
-                # Создаем сервисы
-                from app.services.user_service import UserService
-                from app.services.event_service import EventService
-                
-                user_service = UserService(session, sheets_manager) if sheets_manager else None
-                event_service = EventService(session, sheets_manager) if sheets_manager else None
-                
-                # Добавляем в данные
-                data["session"] = session
-                data["user_service"] = user_service
-                data["event_service"] = event_service
-                data["sheets_manager"] = sheets_manager
-                
-                return await handler(event, data)
+            # Создаем контекстный логгер для каждого запроса
+            event_type = type(event).__name__
+            user_id = getattr(event.from_user, 'id', 'unknown') if hasattr(event, 'from_user') and event.from_user else 'unknown'
+            
+            context_logger = ContextLogger(
+                get_logger("app.middleware"),
+                {"event": event_type, "user_id": user_id}
+            )
+            
+            context_logger.debug(f"Обработка события: {event_type}")
+            
+            try:
+                async with database.get_session() as session:
+                    # Создаем сервисы
+                    from app.services.user_service import UserService
+                    from app.services.event_service import EventService
+                    
+                    user_service = UserService(session, sheets_manager) if sheets_manager else UserService(session, None)
+                    event_service = EventService(session, sheets_manager) if sheets_manager else EventService(session, None)
+                    
+                    # Добавляем в данные
+                    data["session"] = session
+                    data["user_service"] = user_service
+                    data["event_service"] = event_service
+                    data["sheets_manager"] = sheets_manager
+                    data["logger"] = context_logger
+                    
+                    result = await handler(event, data)
+                    context_logger.debug(f"Событие {event_type} обработано успешно")
+                    return result
+                    
+            except Exception as e:
+                context_logger.error(f"Ошибка при обработке события {event_type}: {e}")
+                raise
         
         # Регистрируем middleware
         dp.message.middleware(services_middleware)
@@ -107,17 +122,17 @@ async def main():
         
         # Регистрируем обработчики
         dp.include_router(main_router)
-        logger.info("Основные обработчики зарегистрированы")
+        logger.info("✅ Основные обработчики зарегистрированы")
         
         # Регистрируем диалоги
         register_dialogs(dp)
-        logger.info("Диалоги зарегистрированы")
+        logger.info("✅ Диалоги зарегистрированы")
         
         # Настраиваем aiogram-dialog
         setup_dialogs(dp)
-        logger.info("aiogram-dialog настроен")
+        logger.info("✅ aiogram-dialog настроен")
         
-        logger.info("🚀 Запуск бота...")
+        logger.info("🤖 Бот запущен и готов к работе!")
         print("🤖 Бот запущен и готов к работе!")
         
         # Запускаем бота
@@ -125,13 +140,14 @@ async def main():
             await dp.start_polling(bot)
         finally:
             # Закрываем соединения
+            logger.info("🔄 Закрытие соединений...")
             await bot.session.close()
             await database.close()
             await redis_client.aclose()
-            logger.info("Соединения закрыты")
+            logger.info("✅ Соединения закрыты")
             
     except Exception as e:
-        logger.error(f"Критическая ошибка: {e}")
+        logger.critical(f"💥 Критическая ошибка: {e}")
         print(f"❌ Критическая ошибка: {e}")
         sys.exit(1)
 
@@ -141,6 +157,8 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n👋 Бот остановлен пользователем")
+        get_logger(__name__).info("👋 Бот остановлен пользователем")
     except Exception as e:
         print(f"❌ Критическая ошибка: {e}")
+        get_logger(__name__).critical(f"💥 Критическая ошибка: {e}")
         sys.exit(1)

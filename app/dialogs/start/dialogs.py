@@ -32,7 +32,7 @@ def create_start_dialog() -> Dialog:
             Button(
                 Const("🚀 Начать регистрацию"),
                 id="start_registration",
-                on_click=on_start_registration
+                on_click=on_start_registration,
             ),
             state=StartSG.welcome,
         ),
@@ -90,12 +90,12 @@ def create_start_dialog() -> Dialog:
             Button(
                 Const("❌ Заполнить заново"),
                 id="restart",
-                on_click=on_restart_registration
+                on_click=on_restart_registration,
             ),
             Button(
                 Const("✅ Продолжить"),
                 id="confirm",
-                on_click=on_confirm_registration
+                on_click=on_confirm_registration,
             ),
             getter=get_user_data,
             state=StartSG.confirmation,

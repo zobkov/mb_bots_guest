@@ -1,7 +1,7 @@
 """Обработчики для диалога регистрации на мероприятия."""
 from typing import Any
 
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, StartMode, ShowMode
 from aiogram_dialog.widgets.kbd import Button, Select
 
 from app.services.event_service import EventService
@@ -49,6 +49,7 @@ async def on_register_confirm(callback, button: Button, dialog_manager: DialogMa
 
 async def on_show_my_registrations(callback, button: Button, dialog_manager: DialogManager):
     """Обработчик показа текущих регистраций."""
+    dialog_manager.show_mode = ShowMode.EDIT
     await dialog_manager.switch_to(RegistrationSG.my_registrations)
 
 
@@ -87,4 +88,5 @@ async def on_unregister_event(
 
 async def on_back_to_menu(callback, button: Button, dialog_manager: DialogManager):
     """Обработчик возврата в главное меню."""
-    await dialog_manager.start(MainMenuSG.menu, mode="reset_stack")
+    dialog_manager.show_mode = ShowMode.SEND
+    await dialog_manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)

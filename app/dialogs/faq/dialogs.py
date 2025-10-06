@@ -32,7 +32,7 @@ def create_faq_dialog() -> Dialog:
             Button(
                 Const("🔙 Назад в меню"),
                 id="back_to_menu",
-                on_click=on_back_to_menu
+                on_click=on_back_to_menu,
             ),
             state=FaqSG.faq,
         ),

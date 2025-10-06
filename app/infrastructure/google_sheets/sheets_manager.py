@@ -57,20 +57,29 @@ class GoogleSheetsManager:
             except gspread.WorksheetNotFound:
                 # Создаем новый лист
                 logger.info(f"Создаем новый лист: {sheet_name}")
-                worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=10)
-                
-                # Добавляем заголовки
-                headers = [
-                    "Дата регистрации",
-                    "Имя", 
-                    "Фамилия", 
-                    "Email", 
-                    "Место работы/учебы",
-                    "Telegram ID"
-                ]
-                worksheet.append_row(headers)
-                
-                return worksheet
+                try:
+                    worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=10)
+                    
+                    # Добавляем заголовки
+                    headers = [
+                        "Дата регистрации",
+                        "Имя", 
+                        "Фамилия", 
+                        "Email", 
+                        "Место работы/учебы",
+                        "Telegram ID"
+                    ]
+                    worksheet.append_row(headers)
+                    
+                    return worksheet
+                    
+                except Exception as creation_error:
+                    # Если лист уже существует из-за конкурентного доступа
+                    if "already exists" in str(creation_error):
+                        logger.info(f"Лист {sheet_name} уже существует, получаем его")
+                        return spreadsheet.worksheet(sheet_name)
+                    else:
+                        raise creation_error
                 
         except Exception as e:
             logger.error(f"Ошибка при работе с листом {sheet_name}: {e}")

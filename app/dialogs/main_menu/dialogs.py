@@ -1,6 +1,6 @@
 """Диалог главного меню."""
 from aiogram_dialog import Dialog, Window
-from aiogram_dialog.widgets.text import Format
+from aiogram_dialog.widgets.text import Format, Const
 from aiogram_dialog.widgets.kbd import Button
 
 from .handlers import on_registration_click, on_faq_click
@@ -18,14 +18,14 @@ def create_main_menu_dialog() -> Dialog:
                 "Здесь ты можешь найти нужную информацию и зарегистрироваться на мероприятия."
             ),
             Button(
-                text="📝 Регистрация на мероприятия",
+                Const("📝 Регистрация на мероприятия"),
                 id="registration",
-                on_click=on_registration_click
+                on_click=on_registration_click,
             ),
             Button(
-                text="❓ Поддержка и вопросы",
+                Const("❓ Поддержка и вопросы"),
                 id="faq",
-                on_click=on_faq_click
+                on_click=on_faq_click,
             ),
             getter=get_user_info,
             state=MainMenuSG.menu,
