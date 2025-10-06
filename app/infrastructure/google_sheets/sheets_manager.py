@@ -53,39 +53,51 @@ class GoogleSheetsManager:
             try:
                 worksheet = spreadsheet.worksheet(sheet_name)
                 logger.info(f"Найден существующий лист: {sheet_name}")
+                
+                # Проверим, есть ли заголовки (первая строка)
+                try:
+                    first_row = worksheet.row_values(1)
+                    if not first_row or len(first_row) < 6:
+                        # Если заголовков нет или их мало, добавим
+                        headers = [
+                            "Дата регистрации",
+                            "Имя", 
+                            "Фамилия", 
+                            "Email", 
+                            "Место работы/учебы",
+                            "Telegram ID"
+                        ]
+                        worksheet.insert_row(headers, 1)
+                        logger.info(f"Добавлены заголовки в лист {sheet_name}")
+                except Exception as header_error:
+                    logger.warning(f"Не удалось проверить заголовки для {sheet_name}: {header_error}")
+                
                 return worksheet
+                
             except gspread.WorksheetNotFound:
                 # Создаем новый лист
                 logger.info(f"Создаем новый лист: {sheet_name}")
-                try:
-                    worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=10)
-                    
-                    # Добавляем заголовки
-                    headers = [
-                        "Дата регистрации",
-                        "Имя", 
-                        "Фамилия", 
-                        "Email", 
-                        "Место работы/учебы",
-                        "Telegram ID"
-                    ]
-                    worksheet.append_row(headers)
-                    
-                    return worksheet
-                    
-                except Exception as creation_error:
-                    # Если лист уже существует из-за конкурентного доступа
-                    if "already exists" in str(creation_error):
-                        logger.info(f"Лист {sheet_name} уже существует, получаем его")
-                        return spreadsheet.worksheet(sheet_name)
-                    else:
-                        raise creation_error
+                worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=1000, cols=10)
+                
+                # Добавляем заголовки
+                headers = [
+                    "Дата регистрации",
+                    "Имя", 
+                    "Фамилия", 
+                    "Email", 
+                    "Место работы/учебы",
+                    "Telegram ID"
+                ]
+                worksheet.append_row(headers)
+                logger.info(f"Лист {sheet_name} создан с заголовками")
+                
+                return worksheet
                 
         except Exception as e:
             logger.error(f"Ошибка при работе с листом {sheet_name}: {e}")
             raise
     
-    async def add_user_to_general_sheet(self, user: User) -> bool:
+    def add_user_to_general_sheet(self, user: User) -> bool:
         """Добавить пользователя на общий лист (general)."""
         try:
             worksheet = self._get_or_create_worksheet("general")
@@ -108,7 +120,7 @@ class GoogleSheetsManager:
             logger.error(f"Ошибка добавления пользователя в общий лист: {e}")
             return False
     
-    async def add_user_to_event_sheet(self, user: User, event_name: str, sheet_name: str) -> bool:
+    def add_user_to_event_sheet(self, user: User, event_name: str, sheet_name: str) -> bool:
         """Добавить пользователя на лист мероприятия."""
         try:
             worksheet = self._get_or_create_worksheet(sheet_name)
@@ -131,7 +143,7 @@ class GoogleSheetsManager:
             logger.error(f"Ошибка добавления пользователя на лист мероприятия {event_name}: {e}")
             return False
     
-    async def remove_user_from_event_sheet(self, user: User, sheet_name: str) -> bool:
+    def remove_user_from_event_sheet(self, user: User, sheet_name: str) -> bool:
         """Удалить пользователя с листа мероприятия."""
         try:
             worksheet = self._get_or_create_worksheet(sheet_name)

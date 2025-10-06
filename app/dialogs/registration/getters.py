@@ -42,7 +42,7 @@ async def get_my_registrations_data(dialog_manager: DialogManager, **kwargs) -> 
     if not registrations:
         registrations_text = "У вас пока нет регистраций на мероприятия."
     else:
-        registrations_text = "\n".join([
+        registrations_text = "\n\n".join([
             f"✅ <b>{reg.event.name}</b>\n   📅 {reg.event.start_time} — {reg.event.end_time}"
             for reg in registrations
         ])

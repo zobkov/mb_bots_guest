@@ -11,7 +11,7 @@ from app.infrastructure.google_sheets.sheets_manager import GoogleSheetsManager
 class UserService:
     """Сервис для работы с пользователями."""
     
-    def __init__(self, session: AsyncSession, sheets_manager: GoogleSheetsManager):
+    def __init__(self, session: AsyncSession, sheets_manager: Optional[GoogleSheetsManager] = None):
         self.repository = UserRepository(session)
         self.sheets_manager = sheets_manager
     
@@ -47,7 +47,8 @@ class UserService:
             )
             
             # Добавляем в Google Sheets на общий лист
-            await self.sheets_manager.add_user_to_general_sheet(user)
+            if self.sheets_manager:
+                self.sheets_manager.add_user_to_general_sheet(user)
         
         return user
     

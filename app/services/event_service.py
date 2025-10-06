@@ -18,8 +18,22 @@ class EventService:
         self.sheets_manager = sheets_manager
     
     async def get_all_events(self) -> List[Event]:
-        """Получить все мероприятия."""
-        return await self.event_repository.get_all_events()
+        """Получить все мероприятия в правильном порядке."""
+        events = await self.event_repository.get_all_events()
+        
+        # Определяем порядок сортировки согласно описанию
+        order_map = {
+            "plenary_session": 1,      # Центральная пленарная сессия
+            "vtb_speech": 2,           # Выступление Андрея Костина  
+            "career_workshop": 3,      # Кадры для будущего
+            "small_cities": 4,         # Возрождение малых городов
+            "smart_cities": 5,         # Нейроны мегаполисов
+        }
+        
+        # Сортируем по кастомному порядку
+        events.sort(key=lambda event: order_map.get(event.slug, 999))
+        
+        return events
     
     async def get_user_registrations(self, user_id: int) -> List[EventRegistration]:
         """Получить регистрации пользователя."""
@@ -69,7 +83,7 @@ class EventService:
             event = await self.event_repository.get_by_id(event_id)
             if event:
                 # Добавляем в Google Sheets
-                await self.sheets_manager.add_user_to_event_sheet(
+                self.sheets_manager.add_user_to_event_sheet(
                     user=user,
                     event_name=event.name,
                     sheet_name=event.sheet_name
@@ -97,7 +111,7 @@ class EventService:
             
             if success and event:
                 # Удаляем из Google Sheets
-                await self.sheets_manager.remove_user_from_event_sheet(
+                self.sheets_manager.remove_user_from_event_sheet(
                     user=user,
                     sheet_name=event.sheet_name
                 )
