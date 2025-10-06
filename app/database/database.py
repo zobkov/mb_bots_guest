@@ -1,5 +1,6 @@
 """Подключение к базе данных."""
 from typing import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
@@ -23,8 +24,9 @@ class Database:
             expire_on_commit=False
         )
     
+    @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
-        """Получить сессию базы данных."""
+        """Получить сессию базы данных как async context manager."""
         async with self.session_factory() as session:
             try:
                 yield session

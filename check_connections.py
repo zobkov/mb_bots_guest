@@ -20,11 +20,7 @@ async def check_database():
         config = load_config()
         database = Database(config.database)
         
-        # Правильный способ работы с async generator
-        session_gen = database.get_session()
-        session = await session_gen.__anext__()
-        
-        try:
+        async with database.get_session() as session:
             from sqlalchemy import text
             result = await session.execute(text("SELECT 1"))
             if result.scalar() == 1:
@@ -33,8 +29,6 @@ async def check_database():
             else:
                 print("❌ PostgreSQL: ошибка выполнения запроса")
                 return False
-        finally:
-            await session.close()
                 
     except Exception as e:
         print(f"❌ PostgreSQL: ошибка подключения - {e}")
