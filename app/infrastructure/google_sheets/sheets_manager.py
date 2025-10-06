@@ -57,7 +57,7 @@ class GoogleSheetsManager:
                 # Проверим, есть ли заголовки (первая строка)
                 try:
                     first_row = worksheet.row_values(1)
-                    if not first_row or len(first_row) < 6:
+                    if not first_row or len(first_row) < 7:  # Изменено с 6 на 7 для Username
                         # Если заголовков нет или их мало, добавим
                         headers = [
                             "Дата регистрации",
@@ -65,10 +65,16 @@ class GoogleSheetsManager:
                             "Фамилия", 
                             "Email", 
                             "Место работы/учебы",
-                            "Telegram ID"
+                            "Telegram ID",
+                            "Username"
                         ]
+                        worksheet.clear()  # Очищаем лист
                         worksheet.insert_row(headers, 1)
-                        logger.info(f"Добавлены заголовки в лист {sheet_name}")
+                        logger.info(f"Обновлены заголовки в листе {sheet_name}")
+                    elif len(first_row) == 6:  # Старый формат без Username
+                        # Добавляем колонку Username
+                        worksheet.update_cell(1, 7, "Username")
+                        logger.info(f"Добавлена колонка Username в лист {sheet_name}")
                 except Exception as header_error:
                     logger.warning(f"Не удалось проверить заголовки для {sheet_name}: {header_error}")
                 
@@ -86,7 +92,8 @@ class GoogleSheetsManager:
                     "Фамилия", 
                     "Email", 
                     "Место работы/учебы",
-                    "Telegram ID"
+                    "Telegram ID",
+                    "Username"
                 ]
                 worksheet.append_row(headers)
                 logger.info(f"Лист {sheet_name} создан с заголовками")
@@ -109,7 +116,8 @@ class GoogleSheetsManager:
                 user.last_name,
                 user.email,
                 user.workplace,
-                str(user.telegram_id)
+                str(user.telegram_id),
+                user.username or ""  # Username может быть None
             ]
             
             worksheet.append_row(row_data)
@@ -132,7 +140,8 @@ class GoogleSheetsManager:
                 user.last_name,
                 user.email,
                 user.workplace,
-                str(user.telegram_id)
+                str(user.telegram_id),
+                user.username or ""  # Username может быть None
             ]
             
             worksheet.append_row(row_data)
@@ -148,17 +157,45 @@ class GoogleSheetsManager:
         try:
             worksheet = self._get_or_create_worksheet(sheet_name)
             
+            # Получаем все значения таблицы
+            all_values = worksheet.get_all_values()
+            
+            if len(all_values) <= 1:  # Только заголовки или пустая таблица
+                logger.warning(f"Лист {sheet_name} пуст или содержит только заголовки")
+                return False
+            
             # Ищем строку с пользователем по Telegram ID
-            all_records = worksheet.get_all_records()
+            telegram_id_str = str(user.telegram_id)
+            user_row_index = None
             
-            for i, record in enumerate(all_records, start=2):  # Начинаем с 2, так как 1 - заголовки
-                if str(record.get("Telegram ID", "")) == str(user.telegram_id):
-                    worksheet.delete_rows(i)
-                    logger.info(f"Пользователь {user.first_name} {user.last_name} удален с листа {sheet_name}")
-                    return True
+            # Определяем индекс колонки Telegram ID
+            headers = all_values[0] if all_values else []
+            telegram_id_col = None
             
-            logger.warning(f"Пользователь {user.first_name} {user.last_name} не найден на листе {sheet_name}")
-            return False
+            for col_idx, header in enumerate(headers):
+                if "Telegram ID" in str(header):
+                    telegram_id_col = col_idx
+                    break
+            
+            if telegram_id_col is None:
+                logger.error(f"Колонка 'Telegram ID' не найдена в листе {sheet_name}")
+                return False
+            
+            # Ищем пользователя по строкам (начиная с 1, пропускаем заголовки)
+            for row_idx in range(1, len(all_values)):
+                row = all_values[row_idx]
+                if len(row) > telegram_id_col and str(row[telegram_id_col]) == telegram_id_str:
+                    user_row_index = row_idx + 1  # +1 для корректного индекса в Google Sheets
+                    break
+            
+            if user_row_index is None:
+                logger.warning(f"Пользователь с Telegram ID {telegram_id_str} не найден на листе {sheet_name}")
+                return False
+            
+            # Удаляем строку
+            worksheet.delete_rows(user_row_index)
+            logger.info(f"Пользователь {user.first_name} {user.last_name} (ID: {telegram_id_str}) удален с листа {sheet_name} (строка {user_row_index})")
+            return True
             
         except Exception as e:
             logger.error(f"Ошибка удаления пользователя с листа мероприятия: {e}")

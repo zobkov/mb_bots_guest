@@ -116,7 +116,8 @@ async def on_confirm_registration(callback, button: Button, dialog_manager: Dial
             first_name=context["first_name"],
             last_name=context["last_name"],
             email=context["email"],
-            workplace=context["workplace"]
+            workplace=context["workplace"],
+            username=callback.from_user.username  # Добавляем username из Telegram
         )
         
         # Переходим в главное меню

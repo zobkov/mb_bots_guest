@@ -30,8 +30,8 @@ class EventService:
             "smart_cities": 5,         # Нейроны мегаполисов
         }
         
-        # Сортируем по кастомному порядку
-        events.sort(key=lambda event: order_map.get(event.slug, 999))
+        # Сортируем по кастомному порядку используя sheet_name
+        events.sort(key=lambda event: order_map.get(event.sheet_name, 999))
         
         return events
     

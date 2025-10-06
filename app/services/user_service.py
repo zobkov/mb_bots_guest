@@ -21,7 +21,8 @@ class UserService:
         first_name: str,
         last_name: str,
         email: str,
-        workplace: str
+        workplace: str,
+        username: str = None
     ) -> User:
         """Получить пользователя или создать нового."""
         # Проверяем, существует ли пользователь
@@ -34,12 +35,14 @@ class UserService:
                 first_name=first_name,
                 last_name=last_name,
                 email=email,
-                workplace=workplace
+                workplace=workplace,
+                username=username
             )
         else:
             # Создаем нового пользователя
             user = await self.repository.create(
                 telegram_id=telegram_id,
+                username=username,
                 first_name=first_name,
                 last_name=last_name,
                 email=email,

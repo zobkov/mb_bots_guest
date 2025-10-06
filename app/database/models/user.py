@@ -15,6 +15,7 @@ class User(Base):
     
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(255), nullable=True)  # Telegram username
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False)

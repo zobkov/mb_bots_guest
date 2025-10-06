@@ -25,11 +25,13 @@ class UserRepository:
         first_name: str,
         last_name: str,
         email: str,
-        workplace: str
+        workplace: str,
+        username: str = None
     ) -> User:
         """Создать нового пользователя."""
         user = User(
             telegram_id=telegram_id,
+            username=username,
             first_name=first_name,
             last_name=last_name,
             email=email,
@@ -45,7 +47,8 @@ class UserRepository:
         first_name: str = None,
         last_name: str = None,
         email: str = None,
-        workplace: str = None
+        workplace: str = None,
+        username: str = None
     ) -> User:
         """Обновить данные пользователя."""
         if first_name is not None:
@@ -56,6 +59,8 @@ class UserRepository:
             user.email = email
         if workplace is not None:
             user.workplace = workplace
+        if username is not None:
+            user.username = username
         
         await self.session.flush()
         return user
