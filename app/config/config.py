@@ -46,6 +46,7 @@ class BotConfig:
     """Основная конфигурация бота."""
     token: str
     log_level: str
+    admin_ids: list[int]
 
 
 @dataclass
@@ -65,7 +66,8 @@ def load_config() -> Config:
     return Config(
         bot=BotConfig(
             token=env.str("BOT_TOKEN"),
-            log_level=env.str("LOG_LEVEL", "INFO")
+            log_level=env.str("LOG_LEVEL", "INFO"),
+            admin_ids=[int(id_str.strip()) for id_str in env.str("BOT_ADMIN_IDS", "257026813").split(",")]
         ),
         database=DatabaseConfig(
             host=env.str("DB_HOST"),

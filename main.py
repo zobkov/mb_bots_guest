@@ -18,7 +18,7 @@ from app.config.config import load_config
 from app.database.database import Database
 from app.infrastructure.redis.redis_manager import RedisManager
 from app.infrastructure.google_sheets.sheets_manager import GoogleSheetsManager
-from app.middleware import DependencyMiddleware
+from app.middleware import DependencyMiddleware, LockMiddleware
 from app.handlers import router as main_router
 from app.dialogs.registry import register_dialogs
 from app.utils.logger import setup_logging, get_logger, ContextLogger
@@ -106,6 +106,7 @@ async def main():
                     data["user_service"] = user_service
                     data["event_service"] = event_service
                     data["sheets_manager"] = sheets_manager
+                    data["redis_client"] = redis_client  # Добавляем Redis клиент
                     data["logger"] = context_logger
                     
                     result = await handler(event, data)
@@ -117,6 +118,12 @@ async def main():
                 raise
         
         # Регистрируем middleware
+        # Сначала middleware блокировки (должен быть первым)
+        lock_middleware = LockMiddleware(redis_client, config.bot.admin_ids)
+        dp.message.middleware(lock_middleware)
+        dp.callback_query.middleware(lock_middleware)
+        
+        # Затем middleware для сервисов
         dp.message.middleware(services_middleware)
         dp.callback_query.middleware(services_middleware)
         
