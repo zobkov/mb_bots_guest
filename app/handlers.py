@@ -32,17 +32,9 @@ async def start_command(message: Message, dialog_manager: DialogManager, user_se
 
 
 @router.message(Command("lock"), IsAdminFilter())
-async def lock_command(message: Message, redis_client: redis.Redis = None):
+async def lock_command(message: Message, redis_client: redis.Redis):
     """Обработчик команды /lock для переключения режима блокировки."""
-    # Если Redis клиент не передан через зависимости, создаем его
-    if redis_client is None:
-        from app.config.config import load_config
-        from app.infrastructure.redis.redis_manager import RedisManager
-        
-        config = load_config()
-        redis_manager = RedisManager(config.redis)
-        redis_client = await redis_manager.get_redis()
-    
+    # Redis клиент должен передаваться через dependency injection
     lock_service = LockService(redis_client)
     
     try:

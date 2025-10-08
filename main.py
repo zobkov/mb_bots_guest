@@ -43,7 +43,7 @@ async def main():
         else:
             redis_url = f"redis://{config.redis.host}:{config.redis.port}/0"
         
-        redis_client = Redis.from_url(redis_url)
+        redis_client = Redis.from_url(redis_url, decode_responses=True)  # Важно: добавляем decode_responses=True
         
         # Проверяем подключение к Redis
         try:
@@ -117,13 +117,7 @@ async def main():
                 context_logger.error(f"Ошибка при обработке события {event_type}: {e}")
                 raise
         
-        # Регистрируем middleware
-        # Сначала middleware блокировки (должен быть первым)
-        lock_middleware = LockMiddleware(redis_client, config.bot.admin_ids)
-        dp.message.middleware(lock_middleware)
-        dp.callback_query.middleware(lock_middleware)
-        
-        # Затем middleware для сервисов
+        # Сначала middleware для сервисов (inner middleware)
         dp.message.middleware(services_middleware)
         dp.callback_query.middleware(services_middleware)
         
@@ -138,6 +132,12 @@ async def main():
         # Настраиваем aiogram-dialog
         setup_dialogs(dp)
         logger.info("✅ aiogram-dialog настроен")
+        
+        # ВАЖНО: Регистрируем middleware блокировки ПОСЛЕ setup_dialogs
+        # чтобы он имел приоритет над middleware aiogram-dialog
+        lock_middleware = LockMiddleware(redis_client, config.bot.admin_ids)
+        dp.update.outer_middleware(lock_middleware)  # Для всех типов событий
+        logger.info("✅ LockMiddleware зарегистрирован после setup_dialogs")
         
         logger.info("🤖 Бот запущен и готов к работе!")
         print("🤖 Бот запущен и готов к работе!")

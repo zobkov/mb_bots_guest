@@ -19,7 +19,9 @@ class LockService:
         """Проверяет, заблокирован ли бот."""
         try:
             result = await self.redis.get(self.LOCK_KEY)
-            return result == "true"
+            is_locked = result == "true"
+            logger.debug(f"Проверка блокировки: ключ={self.LOCK_KEY}, значение={result}, результат={is_locked}")
+            return is_locked
         except Exception as e:
             logger.error(f"Ошибка при проверке блокировки: {e}")
             return False
@@ -27,8 +29,9 @@ class LockService:
     async def set_lock(self, locked: bool) -> bool:
         """Устанавливает режим блокировки."""
         try:
-            await self.redis.set(self.LOCK_KEY, "true" if locked else "false")
-            logger.info(f"Режим блокировки {'включен' if locked else 'выключен'}")
+            value = "true" if locked else "false"
+            await self.redis.set(self.LOCK_KEY, value)
+            logger.info(f"Режим блокировки {'включен' if locked else 'выключен'} (установлено значение: {value})")
             return True
         except Exception as e:
             logger.error(f"Ошибка при установке блокировки: {e}")
