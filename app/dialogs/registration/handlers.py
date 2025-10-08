@@ -147,7 +147,7 @@ async def on_confirm_final_registration(callback, button: Button, dialog_manager
         
         # Формируем итоговое сообщение
         if success_count > 0:
-            result_message = f"✅ Изменения успешно сохранены! Обработано операций: {success_count}"
+            result_message = f"✅ Изменения успешно сохранены! Изменено регистраций: {success_count}"
             if error_messages:
                 result_message += f"\n\n⚠️ Ошибки:\n" + "\n".join(error_messages)
         elif error_messages:
