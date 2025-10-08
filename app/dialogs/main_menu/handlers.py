@@ -29,7 +29,7 @@ async def on_registration_click(callback, button: Button, dialog_manager: Dialog
         await dialog_manager.start(RegistrationSG.my_registrations)
     else:
         # Если нет регистраций, начинаем процесс регистрации
-        await dialog_manager.start(RegistrationSG.exclusive_events)
+        await dialog_manager.start(RegistrationSG.optional_events)
 
 
 async def on_faq_click(callback, button: Button, dialog_manager: DialogManager):

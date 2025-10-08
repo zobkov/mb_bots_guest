@@ -125,3 +125,7 @@ class EventService:
     async def get_event_by_id(self, event_id: int) -> Optional[Event]:
         """Получить мероприятие по ID."""
         return await self.event_repository.get_by_id(event_id)
+    
+    async def get_registered_count(self, event_id: int) -> int:
+        """Получить количество зарегистрированных на мероприятие."""
+        return await self.registration_repository.get_event_participants_count(event_id)
