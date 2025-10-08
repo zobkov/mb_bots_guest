@@ -19,8 +19,7 @@ class MainMenuSG(StatesGroup):
 
 class RegistrationSG(StatesGroup):
     """Состояния диалога регистрации на мероприятия."""
-    exclusive_events = State()     # Выбор из взаимоисключающих мероприятий (Radio)
-    optional_events = State()      # Выбор дополнительных мероприятий (Checkbox)
+    optional_events = State()      # Выбор мероприятий
     confirm_registration = State() # Подтверждение выбора
     my_registrations = State()     # Просмотр текущих регистраций
 
