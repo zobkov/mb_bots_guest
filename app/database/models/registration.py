@@ -23,6 +23,7 @@ class Event(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str] = mapped_column(String(1000), nullable=True)
+    day: Mapped[str] = mapped_column(String(50), nullable=False)  # "23 октября"
     start_time: Mapped[str] = mapped_column(String(20), nullable=False)  # "11:00"
     end_time: Mapped[str] = mapped_column(String(20), nullable=False)    # "12:40"
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -39,7 +40,7 @@ class Event(Base):
     )
     
     def __repr__(self) -> str:
-        return f"<Event(name={self.name}, time={self.start_time}-{self.end_time})>"
+        return f"<Event(name={self.name}, day={self.day}, time={self.start_time}-{self.end_time})>"
 
 
 class EventRegistration(Base):

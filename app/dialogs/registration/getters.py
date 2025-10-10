@@ -104,7 +104,7 @@ async def get_optional_events_data(dialog_manager: DialogManager, **kwargs) -> D
         # Добавляем описание мероприятия
         description = getattr(event, 'description', None) or "Подробности будут объявлены дополнительно"
         
-        event_info = f"📅 {event.start_time} — {event.end_time}: <b>{event.name}</b>\n{spots_text}"
+        event_info = f"— <b>{event.name}</b>\n📅 {event.day} \t{event.start_time} — {event.end_time}: \n<i>{spots_text}</i>"
         events_info_lines.append(event_info)
         
         event_info_dict = {
@@ -112,13 +112,13 @@ async def get_optional_events_data(dialog_manager: DialogManager, **kwargs) -> D
             "is_selected": is_selected,
             "is_full": is_full,
             "registered_count": registered_count,
-            "checkbox_text": f"{'☑️' if is_selected else '☐'} {event.start_time}-{event.end_time} {event.name}",
+            "checkbox_text": f"{'☑️' if is_selected else '☐'} {event.day} {event.start_time}-{event.end_time} {event.name}",
         }
         
         # Проверяем, можно ли взаимодействовать с мероприятием
         if is_full and not is_selected and not was_registered_in_db:
             # Заполненное, не выбрано и не было зарегистрировано - недоступно
-            event_info_dict["checkbox_text"] = f"🔒 {event.start_time}-{event.end_time} {event.name} (заполнено)"
+            event_info_dict["checkbox_text"] = f"🔒 {event.day} {event.start_time}-{event.end_time} {event.name} (заполнено)"
             continue  # Не добавляем в доступные
         elif is_selected and is_full:
             # Заполненное, но выбрано - можно отменить
@@ -166,7 +166,7 @@ async def get_confirmation_data(dialog_manager: DialogManager, **kwargs) -> Dict
     # Формируем текст для отображения
     if selected_events:
         events_text = "\n".join([
-            f"✅ <b>{event.name}</b>\n   📅 {event.start_time} — {event.end_time}"
+            f"✅ <b>{event.name}</b>\n   📅 {event.day} {event.start_time} — {event.end_time}"
             for event in selected_events
         ])
     else:
@@ -202,7 +202,7 @@ async def get_my_registrations_data(dialog_manager: DialogManager, **kwargs) -> 
         has_registrations = False
     else:
         registrations_text = "\n\n".join([
-            f"✅ <b>{reg.event.name}</b>\n   📅 {reg.event.start_time} — {reg.event.end_time}"
+            f"✅ <b>{reg.event.name}</b>\n📅 {reg.event.day}    {reg.event.start_time} — {reg.event.end_time}"
             for reg in registrations
         ])
         has_registrations = True

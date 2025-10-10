@@ -30,6 +30,7 @@ async def add_events():
         {
             "name": "Центральная пленарная сессия «Как создать экономику будущего через региональные хабы»",
             "description": "Центральная пленарная сессия конференции",
+            "day": "23 октября",
             "start_time": "11:00",
             "end_time": "12:40",
             "event_type": "plenary",
@@ -40,6 +41,7 @@ async def add_events():
         {
             "name": "Выступление Андрея Костина, президента-председателя правления ВТБ",
             "description": "Специальное выступление президента-председателя правления ВТБ",
+            "day": "23 октября",
             "start_time": "17:30",
             "end_time": "18:50",
             "event_type": "speech",
@@ -50,6 +52,7 @@ async def add_events():
         {
             "name": "Кадры для будущего: как стать желанным кандидатом?",
             "description": "Воркшоп о развитии карьеры и профессиональных навыков",
+            "day": "23 октября",
             "start_time": "13:10",
             "end_time": "14:30",
             "event_type": "workshop",
@@ -60,6 +63,7 @@ async def add_events():
         {
             "name": "Возрождение малых городов — новые центры притяжения",
             "description": "Обсуждение развития малых городов и региональной экономики",
+            "day": "23 октября",
             "start_time": "13:10",
             "end_time": "14:30",
             "event_type": "workshop",
@@ -70,6 +74,7 @@ async def add_events():
         {
             "name": "Нейроны мегаполисов: AI, IoT и BigData как цифровая нервная система",
             "description": "Технологический воркшоп о цифровизации городов",
+            "day": "24 октября",
             "start_time": "13:10",
             "end_time": "14:30",
             "event_type": "workshop",
@@ -103,7 +108,7 @@ async def add_events():
             for event_data in events_data:
                 exclusive_mark = " (взаимоисключающее)" if event_data["is_exclusive"] else ""
                 max_part = f" (макс. {event_data['max_participants']})" if event_data["max_participants"] else ""
-                print(f"• {event_data['start_time']}-{event_data['end_time']}: {event_data['name']}{exclusive_mark}{max_part}")
+                print(f"• {event_data['day']} {event_data['start_time']}-{event_data['end_time']}: {event_data['name']}{exclusive_mark}{max_part}")
                 
     except Exception as e:
         print(f"❌ Ошибка добавления мероприятий: {e}")
