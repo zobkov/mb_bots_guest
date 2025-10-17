@@ -102,9 +102,11 @@ async def get_optional_events_data(dialog_manager: DialogManager, **kwargs) -> D
             spots_text = "Осталось мест: неограниченно"
         
         # Добавляем описание мероприятия
-        description = getattr(event, 'description', None) or "Подробности будут объявлены дополнительно"
+        description = getattr(event, 'description', None) or ""
+        if description != "":
+            description = "- " + description
         
-        event_info = f"— <b>{event.name}</b>\n📅 {event.day} \t{event.start_time} — {event.end_time}: \n<i>{spots_text}</i>"
+        event_info = f"— <b>{event.name}</b> <i>{description}</i>\n📅 {event.day} \t{event.start_time} - {event.end_time}: \n<i>{spots_text}</i>"
         events_info_lines.append(event_info)
         
         event_info_dict = {
