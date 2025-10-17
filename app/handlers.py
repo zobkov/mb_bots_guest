@@ -1,7 +1,7 @@
 """Основные обработчики команд."""
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, StartMode
 import redis.asyncio as redis
 
@@ -29,6 +29,19 @@ async def start_command(message: Message, dialog_manager: DialogManager, user_se
     else:
         # Новый пользователь, начинаем регистрацию
         await dialog_manager.start(StartSG.welcome, mode=StartMode.RESET_STACK)
+
+
+@router.message(Command("menu"))
+async def menu_command(message: Message, dialog_manager: DialogManager):
+    """Обработчик команды /menu для открытия главного меню."""
+    await dialog_manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)
+
+
+@router.callback_query(F.data == "open_main_menu")
+async def menu_button_handler(callback: CallbackQuery, dialog_manager: DialogManager):
+    """Обработчик кнопки "Главное меню" из широковещательных сообщений."""
+    await callback.answer()
+    await dialog_manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)
 
 
 @router.message(Command("lock"), IsAdminFilter())
