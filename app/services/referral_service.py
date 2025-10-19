@@ -13,7 +13,7 @@ from app.database.repositories.event_repository import EventRepository
 from app.database.repositories.user_repository import UserRepository
 
 
-REFERRAL_EVENT_KEYWORDS = ("мордашов", "mordashov")
+REFERRAL_EVENT_KEYWORDS = ("мордашов", "mordashov", "костин", "kostin")
 
 
 @dataclass
