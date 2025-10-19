@@ -1,4 +1,6 @@
 """Utility script for sending a broadcast message to users from CSV."""
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 import asyncio
 import csv
 from dataclasses import dataclass
@@ -11,9 +13,23 @@ from aiogram.exceptions import TelegramRetryAfter
 
 from app.config.config import load_config
 
-CSV_PATH = Path("Регистрации гостей МБ25 - техвыгрузка.csv")
-MESSAGE_TEXT = ("""Привет!
-Программа открытых мероприятий обновлена – загляни в бота за новым расписанием."""
+CSV_PATH = Path("Регистрации гостей МБ25 - техвыгрузка (2).csv")
+MESSAGE_TEXT = ("""<b>Привет!</b>
+
+Мы запустили <b>реферальную программу</b> 🎉
+
+Теперь у тебя в главном меню появилась вкладка «Реферальная программа» — там лежит твоя персональная ссылка.
+
+Отправь её друзьям! Когда кто-то зарегистрируется по ней на мероприятие <b>«Севергрупп» с участием Алексея Мордашова</b>, ты получишь <b>+1 балл</b>.
+
+После мероприятия подведём итоги: кто пригласил больше всего людей — получит призы 
+
+🎁 Призы:
+• 🥇 1 место — свитшот
+• 🥈 2–4 места — картхолдер
+• 🥉 5–7 места — бутылка
+• 💫 8–10 места — набор наклеек
+"""
 )
 
 MENU_BUTTON_MARKUP = InlineKeyboardMarkup(
@@ -112,7 +128,7 @@ async def main() -> None:
         return
 
     config = load_config()
-    bot = Bot(token=config.bot.token)
+    bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
     try:
         successes, failures = await send_messages(bot, recipients, MESSAGE_TEXT)
