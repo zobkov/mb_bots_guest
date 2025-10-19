@@ -5,9 +5,10 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, StartMode
 import redis.asyncio as redis
 
-from app.states import StartSG, MainMenuSG
+from app.states import StartSG, MainMenuSG, ReferralSG
 from app.services.user_service import UserService
 from app.services.lock_service import LockService
+from app.services.referral_service import ReferralService
 from app.filters import IsAdminFilter
 from app.utils.logger import get_logger
 
@@ -16,19 +17,42 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def start_command(message: Message, dialog_manager: DialogManager, user_service: UserService):
+async def start_command(
+    message: Message,
+    dialog_manager: DialogManager,
+    user_service: UserService,
+    referral_service: ReferralService,
+):
     """Обработчик команды /start."""
     telegram_id = message.from_user.id
+    payload = ""
+    if message.text and " " in message.text:
+        payload = message.text.split(maxsplit=1)[1].strip()
+    elif message.text and message.text.startswith("/start"):
+        # Aiogram может передавать аргументы через message.get_args(), но для надежности парсим вручную
+        parts = message.text.split(None, 1)
+        if len(parts) > 1:
+            payload = parts[1].strip()
     
     # Проверяем, зарегистрирован ли пользователь
     user = await user_service.get_user_by_telegram_id(telegram_id)
     
     if user:
+        await referral_service.ensure_user_has_referral_code(user)
+        if payload:
+            await referral_service.apply_referral_code(user, payload)
         # Пользователь уже зарегистрирован, переходим в главное меню
         await dialog_manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)
     else:
         # Новый пользователь, начинаем регистрацию
-        await dialog_manager.start(StartSG.welcome, mode=StartMode.RESET_STACK)
+        if payload:
+            await dialog_manager.start(
+                StartSG.welcome,
+                mode=StartMode.RESET_STACK,
+                data={"referral_code": payload},
+            )
+        else:
+            await dialog_manager.start(StartSG.welcome, mode=StartMode.RESET_STACK)
 
 
 @router.message(Command("menu"))
@@ -42,6 +66,13 @@ async def menu_button_handler(callback: CallbackQuery, dialog_manager: DialogMan
     """Обработчик кнопки "Главное меню" из широковещательных сообщений."""
     await callback.answer()
     await dialog_manager.start(MainMenuSG.menu, mode=StartMode.RESET_STACK)
+
+
+@router.callback_query(F.data == "open_referral_dashboard")
+async def referral_button_handler(callback: CallbackQuery, dialog_manager: DialogManager):
+    """Обработчик кнопки открытия реферальной программы."""
+    await callback.answer()
+    await dialog_manager.start(ReferralSG.dashboard, mode=StartMode.RESET_STACK)
 
 
 @router.message(Command("lock"), IsAdminFilter())

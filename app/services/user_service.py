@@ -38,6 +38,7 @@ class UserService:
                 workplace=workplace,
                 username=username
             )
+            await self.repository.ensure_referral_code(user)
         else:
             # Создаем нового пользователя
             user = await self.repository.create(

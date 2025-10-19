@@ -8,11 +8,17 @@ from aiogram_dialog.widgets.input import ManagedTextInput
 from aiogram_dialog.widgets.kbd import Button
 
 from app.services.user_service import UserService
+from app.services.referral_service import ReferralService
 from app.states import StartSG, MainMenuSG
 
 
 async def on_start_registration(callback, button: Button, dialog_manager: DialogManager):
     """Обработчик начала регистрации."""
+    referral_code = None
+    if dialog_manager.start_data:
+        referral_code = dialog_manager.start_data.get("referral_code")
+    if referral_code:
+        dialog_manager.dialog_data["referral_code"] = referral_code
     await dialog_manager.next()
 
 
@@ -108,6 +114,7 @@ async def on_confirm_registration(callback, button: Button, dialog_manager: Dial
     
     # Получаем сервис пользователей
     user_service: UserService = dialog_manager.middleware_data["user_service"]
+    referral_service: ReferralService = dialog_manager.middleware_data["referral_service"]
     
     try:
         # Создаем или обновляем пользователя
@@ -119,6 +126,17 @@ async def on_confirm_registration(callback, button: Button, dialog_manager: Dial
             workplace=context["workplace"],
             username=callback.from_user.username  # Добавляем username из Telegram
         )
+
+        # Обрабатываем реферальную информацию
+        referral_code = context.get("referral_code")
+        if not referral_code and dialog_manager.start_data:
+            referral_code = dialog_manager.start_data.get("referral_code")
+
+        await referral_service.ensure_user_has_referral_code(user)
+        if referral_code:
+            await referral_service.apply_referral_code(user, referral_code)
+            # Чтобы не перепривязывать, очищаем сохраненный код
+            context.pop("referral_code", None)
         
         # Переходим в главное меню
         dialog_manager.show_mode = ShowMode.SEND

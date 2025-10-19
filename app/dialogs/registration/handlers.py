@@ -1,11 +1,14 @@
 """Обработчики для диалога регистрации на мероприятия."""
+from datetime import datetime
 from typing import Any
 
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram_dialog import DialogManager, StartMode, ShowMode
 from aiogram_dialog.widgets.kbd import Button, Select
 
 from app.services.event_service import EventService
 from app.services.user_service import UserService
+from app.services.referral_service import ReferralService
 from app.states import RegistrationSG, MainMenuSG
 
 
@@ -84,6 +87,8 @@ async def on_confirm_final_registration(callback, button: Button, dialog_manager
     """Обработчик подтверждения изменений - реальное сохранение в БД и Google Sheets."""
     event_service: EventService = dialog_manager.middleware_data["event_service"]
     user_service: UserService = dialog_manager.middleware_data["user_service"]
+    referral_service: ReferralService = dialog_manager.middleware_data["referral_service"]
+    bot = dialog_manager.middleware_data.get("bot") or callback.bot
     
     telegram_id = callback.from_user.id
     user = await user_service.get_user_by_telegram_id(telegram_id)
@@ -108,13 +113,15 @@ async def on_confirm_final_registration(callback, button: Button, dialog_manager
     
     try:
         # Сначала проверяем лимиты для новых регистраций
+        events_to_register = []
         for event_id_str in to_register:
             event_id = int(event_id_str)
             event = await event_service.get_event_by_id(event_id)
             if not event:
                 error_messages.append(f"Мероприятие с ID {event_id} не найдено")
                 continue
-                
+            events_to_register.append(event)
+            
             # Проверяем лимиты
             registered_count = await event_service.get_registered_count(event_id)
             if event.max_participants and registered_count >= event.max_participants:
@@ -137,11 +144,37 @@ async def on_confirm_final_registration(callback, button: Button, dialog_manager
                 error_messages.append(f"Ошибка отмены: {message}")
         
         # Добавляем новые регистрации
-        for event_id_str in to_register:
-            event_id = int(event_id_str)
-            success, message = await event_service.register_user_for_event(user, event_id)
+        for event in events_to_register:
+            success, message = await event_service.register_user_for_event(user, event.id)
             if success:
                 success_count += 1
+                # Отправляем приглашение в реферальную программу, если выполнены условия
+                if referral_service.should_notify_for_event(event) and not await referral_service.was_notified(user):
+                    await referral_service.ensure_user_has_referral_code(user)
+                    if user.referrer_id and not user.referral_joined_at:
+                        user.referral_joined_at = datetime.utcnow()
+                        session = dialog_manager.middleware_data.get("session")
+                        if session:
+                            await session.flush()
+                    link = await referral_service.get_invite_link(bot, user)
+                    await callback.message.answer(
+                        "🎉 <b>Реферальная программа запущена!</b>\n\n"
+                        "Теперь ты можешь приглашать друзей на форум. Передай им эту ссылку:\n"
+                        f"<code>{link}</code>\n\n"
+                        "Следи за приглашениями и статусом призов в разделе \"Реферальная программа\" главного меню.",
+                        reply_markup=InlineKeyboardMarkup(
+                            inline_keyboard=[
+                                [
+                                    InlineKeyboardButton(
+                                        text="Открыть реферальную программу",
+                                        callback_data="open_referral_dashboard",
+                                    )
+                                ]
+                            ]
+                        ),
+                        disable_web_page_preview=True,
+                    )
+                    await referral_service.mark_notified(user)
             else:
                 error_messages.append(f"Ошибка регистрации: {message}")
         

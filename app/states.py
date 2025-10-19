@@ -27,3 +27,8 @@ class RegistrationSG(StatesGroup):
 class FaqSG(StatesGroup):
     """Состояния диалога поддержки."""
     faq = State()
+
+
+class ReferralSG(StatesGroup):
+    """Состояния диалога реферальной программы."""
+    dashboard = State()

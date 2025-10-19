@@ -144,3 +144,5 @@ app/config/google_credentials.json
 
 # Alembic
 migrations/versions/
+
+*.csv

@@ -2,7 +2,7 @@
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
-from app.states import RegistrationSG, FaqSG
+from app.states import RegistrationSG, FaqSG, ReferralSG
 from app.services.user_service import UserService
 from app.services.event_service import EventService
 
@@ -36,3 +36,9 @@ async def on_faq_click(callback, button: Button, dialog_manager: DialogManager):
     """Обработчик нажатия на кнопку поддержки."""
     dialog_manager.show_mode = ShowMode.SEND
     await dialog_manager.start(FaqSG.faq)
+
+
+async def on_referral_click(callback, button: Button, dialog_manager: DialogManager):
+    """Обработчик нажатия на кнопку реферальной программы."""
+    dialog_manager.show_mode = ShowMode.SEND
+    await dialog_manager.start(ReferralSG.dashboard)

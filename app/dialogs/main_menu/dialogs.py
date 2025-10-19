@@ -3,7 +3,7 @@ from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Format, Const
 from aiogram_dialog.widgets.kbd import Button
 
-from .handlers import on_registration_click, on_faq_click
+from .handlers import on_registration_click, on_faq_click, on_referral_click
 from .getters import get_user_info
 from ...states import MainMenuSG
 
@@ -26,6 +26,11 @@ def create_main_menu_dialog() -> Dialog:
                 Const("❓ Поддержка и вопросы"),
                 id="faq",
                 on_click=on_faq_click,
+            ),
+            Button(
+                Const("🎁 Реферальная программа"),
+                id="referral",
+                on_click=on_referral_click,
             ),
             getter=get_user_info,
             state=MainMenuSG.menu,
