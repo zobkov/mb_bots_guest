@@ -32,3 +32,12 @@ class FaqSG(StatesGroup):
 class ReferralSG(StatesGroup):
     """Состояния диалога реферальной программы."""
     dashboard = State()
+
+
+class PassportSG(StatesGroup):
+    """Состояния диалога паспортных данных."""
+    instructions = State()
+    passport_info = State()  # legacy совместимость
+    full_name = State()
+    passport_number = State()
+    car_number = State()

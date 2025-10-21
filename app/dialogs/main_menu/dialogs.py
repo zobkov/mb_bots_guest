@@ -3,7 +3,12 @@ from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Format, Const
 from aiogram_dialog.widgets.kbd import Button
 
-from .handlers import on_registration_click, on_faq_click, on_referral_click
+from .handlers import (
+    on_registration_click,
+    on_faq_click,
+    on_referral_click,
+    on_passport_click,
+)
 from .getters import get_user_info
 from ...states import MainMenuSG
 
@@ -14,13 +19,19 @@ def create_main_menu_dialog() -> Dialog:
         Window(
             Format(
                 "Привет, <b>{first_name}</b>! 👋\n\n"
-                "Это бот для гостей конференции <b>Менеджмент Будущего</b>. "
-                "Здесь ты можешь найти нужную информацию и зарегистрироваться на мероприятия."
+                "Это бот для гостей конференции <b>Менеджмент Будущего</b>.\n"
+                "Здесь ты можешь найти нужную информацию, оформить пропуск и зарегистрироваться на мероприятия.\n\n"
+                "<b>ВНИМАНИЕ</b> \nЕсли ты не из СПбГУ, то необходимо заполнить данные в разделе <b>\"Данные для пропуска\"</b>"
             ),
             Button(
                 Const("📝 Регистрация на мероприятия"),
                 id="registration",
                 on_click=on_registration_click,
+            ),
+            Button(
+                Const("🛂 Данные для пропуска"),
+                id="passport",
+                on_click=on_passport_click,
             ),
             Button(
                 Const("❓ Поддержка и вопросы"),

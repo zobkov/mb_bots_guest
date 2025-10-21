@@ -98,10 +98,12 @@ async def main():
                     from app.services.user_service import UserService
                     from app.services.event_service import EventService
                     from app.services.referral_service import ReferralService
+                    from app.services.passport_service import PassportService
                     
                     user_service = UserService(session, sheets_manager) if sheets_manager else UserService(session, None)
                     event_service = EventService(session, sheets_manager) if sheets_manager else EventService(session, None)
                     referral_service = ReferralService(session)
+                    passport_service = PassportService(session, sheets_manager)
                     
                     # Добавляем в данные
                     data["session"] = session
@@ -109,6 +111,7 @@ async def main():
                     data["event_service"] = event_service
                     data["referral_service"] = referral_service
                     data["sheets_manager"] = sheets_manager
+                    data["passport_service"] = passport_service
                     data["redis_client"] = redis_client  # Добавляем Redis клиент
                     data["logger"] = context_logger
                     data["bot"] = bot

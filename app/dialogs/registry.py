@@ -7,6 +7,7 @@ from .main_menu.dialogs import create_main_menu_dialog
 from .registration.dialogs import create_registration_dialog
 from .faq.dialogs import create_faq_dialog
 from .referral.dialogs import create_referral_dialog
+from .passport.dialogs import create_passport_dialog
 
 
 def register_dialogs(router: Router) -> None:
@@ -17,6 +18,7 @@ def register_dialogs(router: Router) -> None:
     registration_dialog = create_registration_dialog()
     faq_dialog = create_faq_dialog()
     referral_dialog = create_referral_dialog()
+    passport_dialog = create_passport_dialog()
     
     # Регистрируем диалоги
     router.include_router(start_dialog)
@@ -24,6 +26,7 @@ def register_dialogs(router: Router) -> None:
     router.include_router(registration_dialog)
     router.include_router(faq_dialog)
     router.include_router(referral_dialog)
+    router.include_router(passport_dialog)
     
     # Настраиваем aiogram-dialog
     setup_dialogs(router)

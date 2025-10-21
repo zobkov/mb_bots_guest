@@ -1,6 +1,6 @@
 """Менеджер для работы с Google Sheets."""
 import logging
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 
 import gspread
@@ -57,23 +57,21 @@ class GoogleSheetsManager:
                 # Проверим, есть ли заголовки (первая строка)
                 try:
                     first_row = worksheet.row_values(1)
-                    if not first_row or len(first_row) < 7:  # Изменено с 6 на 7 для Username
-                        # Если заголовков нет или их мало, добавим
-                        headers = [
-                            "Дата регистрации",
-                            "Имя", 
-                            "Фамилия", 
-                            "Email", 
-                            "Место работы/учебы",
-                            "Telegram ID",
-                            "Username"
-                        ]
+                    headers = [
+                        "Дата регистрации",
+                        "Имя", 
+                        "Фамилия", 
+                        "Email", 
+                        "Место работы/учебы",
+                        "Telegram ID",
+                        "Username"
+                    ]
+                    if not first_row or len(first_row) < len(headers):
                         worksheet.clear()  # Очищаем лист
                         worksheet.insert_row(headers, 1)
                         logger.info(f"Обновлены заголовки в листе {sheet_name}")
-                    elif len(first_row) == 6:  # Старый формат без Username
-                        # Добавляем колонку Username
-                        worksheet.update_cell(1, 7, "Username")
+                    elif len(first_row) == len(headers) - 1:
+                        worksheet.update_cell(1, len(headers), headers[-1])
                         logger.info(f"Добавлена колонка Username в лист {sheet_name}")
                 except Exception as header_error:
                     logger.warning(f"Не удалось проверить заголовки для {sheet_name}: {header_error}")
@@ -103,6 +101,101 @@ class GoogleSheetsManager:
         except Exception as e:
             logger.error(f"Ошибка при работе с листом {sheet_name}: {e}")
             raise
+
+    def _get_or_create_passport_sheet(self) -> gspread.Worksheet:
+        """Получить лист с пропусками или создать его с нужными заголовками."""
+        headers = [
+            "Дата обновления",
+            "ФИО",
+            "Паспорт",
+            "Номер автомобиля",
+            "Telegram ID",
+            "Username",
+        ]
+
+        try:
+            spreadsheet = self._get_spreadsheet()
+            try:
+                worksheet = spreadsheet.worksheet("Пропуски")
+                try:
+                    first_row = worksheet.row_values(1)
+                    if first_row[: len(headers)] != headers:
+                        worksheet.update("A1", [headers])
+                        logger.info("Обновлены заголовки в листе 'Пропуски'")
+                except Exception as header_error:
+                    logger.warning(
+                        "Не удалось обновить заголовки для листа 'Пропуски': %s",
+                        header_error,
+                    )
+                return worksheet
+            except gspread.WorksheetNotFound:
+                worksheet = spreadsheet.add_worksheet(title="Пропуски", rows=1000, cols=10)
+                worksheet.append_row(headers)
+                logger.info("Создан новый лист 'Пропуски' с заголовками")
+                return worksheet
+        except Exception as e:
+            logger.error("Ошибка при работе с листом 'Пропуски': %s", e)
+            raise
+
+    def upsert_passport_entry(
+        self,
+        user: User,
+        full_name: str,
+        passport_number: str,
+        car_number: Optional[str] = None,
+    ) -> bool:
+        """Добавить или обновить запись о паспорте на листе 'Пропуски'."""
+        try:
+            worksheet = self._get_or_create_passport_sheet()
+
+            row_data = [
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                full_name,
+                passport_number,
+                car_number or "",
+                str(user.telegram_id),
+                user.username or "",
+            ]
+
+            all_values = worksheet.get_all_values()
+            if not all_values:
+                worksheet.append_row(row_data)
+                return True
+
+            headers = all_values[0]
+            telegram_id_col = None
+            for idx, header in enumerate(headers):
+                if "Telegram ID" in header:
+                    telegram_id_col = idx
+                    break
+
+            if telegram_id_col is None:
+                logger.error("Колонка 'Telegram ID' не найдена на листе 'Пропуски'")
+                return False
+
+            target_row = None
+            telegram_id_str = str(user.telegram_id)
+            for row_idx in range(1, len(all_values)):
+                row = all_values[row_idx]
+                if len(row) > telegram_id_col and row[telegram_id_col] == telegram_id_str:
+                    target_row = row_idx + 1
+                    break
+
+            if target_row:
+                range_start = "A"  # первые 6 колонок
+                range_end = chr(ord("A") + len(row_data) - 1)
+                range_notation = f"{range_start}{target_row}:{range_end}{target_row}"
+                worksheet.update(range_notation, [row_data])
+                logger.info("Обновлена запись пользователя %s в листе 'Пропуски'", telegram_id_str)
+            else:
+                worksheet.append_row(row_data)
+                logger.info("Добавлена запись пользователя %s в лист 'Пропуски'", telegram_id_str)
+
+            return True
+
+        except Exception as e:
+            logger.error("Ошибка при синхронизации данных паспорта в листе 'Пропуски': %s", e)
+            return False
     
     def add_user_to_general_sheet(self, user: User) -> bool:
         """Добавить пользователя на общий лист (general)."""

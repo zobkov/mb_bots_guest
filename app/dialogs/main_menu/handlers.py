@@ -2,7 +2,7 @@
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
-from app.states import RegistrationSG, FaqSG, ReferralSG
+from app.states import RegistrationSG, FaqSG, ReferralSG, PassportSG
 from app.services.user_service import UserService
 from app.services.event_service import EventService
 
@@ -42,3 +42,16 @@ async def on_referral_click(callback, button: Button, dialog_manager: DialogMana
     """Обработчик нажатия на кнопку реферальной программы."""
     dialog_manager.show_mode = ShowMode.SEND
     await dialog_manager.start(ReferralSG.dashboard)
+
+
+async def on_passport_click(callback, button: Button, dialog_manager: DialogManager):
+    """Обработчик перехода к заполнению паспортных данных."""
+    user_service: UserService = dialog_manager.middleware_data["user_service"]
+    user = await user_service.get_user_by_telegram_id(callback.from_user.id)
+
+    if not user:
+        await callback.answer("Сначала пройдите регистрацию.", show_alert=True)
+        return
+
+    dialog_manager.show_mode = ShowMode.SEND
+    await dialog_manager.start(PassportSG.instructions)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from .registration import EventRegistration
+    from .passport import PassportData
 
 from .base import Base
 
@@ -46,6 +47,12 @@ class User(Base):
         "User",
         back_populates="referrer",
         cascade="save-update, merge"
+    )
+    passport_data: Mapped[Optional["PassportData"]] = relationship(
+        "PassportData",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
     
     def __repr__(self) -> str:

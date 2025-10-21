@@ -11,6 +11,7 @@ from app.services.user_service import UserService
 from app.services.event_service import EventService
 from app.services.lock_service import LockService
 from app.utils.logger import get_logger
+from app.services.passport_service import PassportService
 
 logger = get_logger(__name__)
 
@@ -138,11 +139,13 @@ class DependencyMiddleware(BaseMiddleware):
             # Создаем сервисы
             user_service = UserService(session, self.sheets_manager)
             event_service = EventService(session, self.sheets_manager)
+            passport_service = PassportService(session, self.sheets_manager)
             
             # Добавляем в данные
             data["session"] = session
             data["user_service"] = user_service
             data["event_service"] = event_service
             data["sheets_manager"] = self.sheets_manager
+            data["passport_service"] = passport_service
             
             return await handler(event, data)
